@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { ScrollControls, Scroll, Environment } from '@react-three/drei'
 import { Basketball } from './Basketball'
 
-export default function App() {
+export default function ThreeScroll() {
   return (
     <div className="h-screen w-full bg-zinc-950">
       <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
