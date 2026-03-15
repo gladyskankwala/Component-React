@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Movies</title>
+</head>
+<body>
+
+<input id="search" placeholder="Search">
+<button onclick="searchMovies()">Search</button>
+
+<div id="main"></div>
+
+<script>
+const main = document.getElementById("main")
+const IMG_PATH = "https://image.tmdb.org/t/p/w1280"
+
+async function getMovies() {
+  const res = await fetch("http://localhost:3000/movies")
+  const data = await res.json()
+  showMovies(data.results)
+}
+
+async function searchMovies() {
+  const query = document.getElementById("search").value
+  const res = await fetch(
+    `http://localhost:3000/search?q=${encodeURIComponent(query)}`
+  )
+  const data = await res.json()
+  showMovies(data.results)
+}
+
+function showMovies(movies) {
+  main.innerHTML = ""
+
+  movies.forEach(movie => {
+    const div = document.createElement("div")
+
+    div.innerHTML = `
+      <img src="${IMG_PATH + movie.poster_path}" width="200">
+      <h3>${movie.title}</h3>
+      <span>${movie.vote_average}</span>
+    `
+
+    main.appendChild(div)
+  })
+}
+
+getMovies()
+</script>
+
+</body>
+</html>

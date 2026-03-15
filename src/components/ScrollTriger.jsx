@@ -14,11 +14,11 @@ function ScrollTriger () {
 
         boxes.forEach((box) => {
             gsap.from(box, {
-                scale: 0.2,
+                scale: 0.4,
                 scrollTrigger: {
                     trigger: box,
                     start: "bottom bottom",
-                    end: "top 20%",
+                    end: "center center",
                     scrub: true,
                     markers: true
                 }
@@ -38,10 +38,6 @@ function ScrollTriger () {
 
     }, {scope: main})
 
-    window.addEventListener('load', () => {
-        ScrollTrigger.refresh()
-    })
-
  
 
     
@@ -53,10 +49,8 @@ function ScrollTriger () {
                 <h1 className="text-4xl">Basic ScrollTrigger with React</h1>
                 <p>Scroll down to see the magic happening</p>
             </section>
-            <div className="box-container gap-4 space-y-48" ref={main}>
-                <div className="box h-screen w-screen">
-                    <h1>Welcome to our beautiful page</h1>
-                </div>
+            <div className="box-container gap-4 space-y-40 flex justify-center items-center h-screen w-screen flex-col" ref={main}>
+                <div className="box bg-blue-500 h-screen w-screen">Box 1</div>
             </div>
             <section className="section flex justify-center items-center h-screen screen w-screen bg-white">
                 <h1>Gladis</h1>

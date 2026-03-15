@@ -9,7 +9,7 @@ function MovieApp() {
     useEffect(() =>{
         const fetchData = async () => {
             try {
-                const res = await fetch('https://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=3fd2be6f0c70a2a598f084ddfb75487c&page=1')
+                const res = await fetch('')
 
                 if (!res.ok) {
                     throw new Error ("Data could not be loaded")

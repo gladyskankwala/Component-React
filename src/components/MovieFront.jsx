@@ -9,7 +9,8 @@ function MovieFront() {
     const fetchData = async (e) => {
         const res = await fetch("http://localhost:3000/movies")
         const data = await res.json()
-        setMovies(data.results)
+        setMovies(data.results.map(movie => ({...movie, saved: false})))
+
     }
 
     const searchData = async (e) => {
@@ -19,8 +20,36 @@ function MovieFront() {
 
         const res = await fetch(`http://localhost:3000/search?q=${search}`)
         const data = await res.json()
-        setMovies(data.results)
+        setMovies(data.results.map(movie => ({...movie, saved: false})))
         setSearch("")
+    }
+
+    const saveMovie = async (movie) => {
+        try{
+            const res = await fetch("http://localhost:3000/save", {
+                method: "POST",
+                headers: {
+                    "content-type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: movie.title,
+                    rating: movie.vote_average,
+                    poster: movie.poster_path
+                })
+            })
+
+            const data = await res.json()
+            console.log("saved:", data)
+
+            setMovies(prev =>
+                prev.map(m =>
+                    m.id === movie.id ? {...m , saved : true} : m
+                ))
+            
+
+        } catch (error) {
+            console.error("Error saving movie", error)
+        }
     }
 
     useEffect(()=>{
@@ -49,6 +78,9 @@ function MovieFront() {
 
                         <h3>{movie.title}</h3>
                         <p>{movie.vote_average}</p>
+                        <button onClick={() => saveMovie(movie)} disabled={movie.saved}>
+                            {movie.saved ? "Saved" : "save"}
+                        </button>
                     </div>
                 ))}
             </div>

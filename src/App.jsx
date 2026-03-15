@@ -1,11 +1,13 @@
-import MovieApp from "./components/MovieApp"
-import MovieFront from "./components/movieFront"
+//import MovieApp from "./components/MovieApp"
+//import MovieFront from "./components/movieFront"
+
+import ScrollTriger from "./components/scrollTriger"
 
 
 function App() {
     return(
         <>
-         <MovieFront/>
+         <ScrollTriger/>
         </>
     )
 }
