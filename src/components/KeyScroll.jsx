@@ -31,7 +31,7 @@ function AgencyKeyboard() {
         <primitive 
           ref={group} 
           object={scene} 
-          scale={15} // Adjust this if the keyboard is too big/small
+          scale={20} // Adjust this if the keyboard is too big/small
           rotation={[0.4, -0.4, 0]} 
         />
       </Center>
