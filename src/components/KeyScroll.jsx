@@ -3,35 +3,41 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { ScrollControls, Scroll, useGLTF, Environment, Float, Center, Html, useScroll } from '@react-three/drei'
 import * as THREE from 'three'
 
-// 1. THE 3D MODEL COMPONENT
 function AgencyKeyboard() {
   const group = useRef()
   const scroll = useScroll()
-  
-  // Pointing to public/assets/keyboard.glb
-  // The leading "/" tells Vite to look in the public folder
   const { scene } = useGLTF('/assets/keyboard.glb')
 
   useFrame((state) => {
-    const offset = scroll.offset // Value from 0 to 1 based on scroll
+    // scroll.offset is 0 at the top and 1 at the bottom
+    const offset = scroll.offset 
 
-    // Position: Transitions from center-left to bottom-right
-    group.current.position.x = THREE.MathUtils.lerp(-1, 3, offset)
-    group.current.position.y = THREE.MathUtils.lerp(0, -4, offset)
-    
-    // Rotation: A full 360 spin plus a slight tilt
-    group.current.rotation.x = offset * Math.PI * 0.5
-    group.current.rotation.y = offset * Math.PI * 2
-    group.current.rotation.z = Math.sin(offset) * 0.2
+    // 1. DYNAMIC POSITIONING
+    // Moves from left (-2) to right (4) and slightly up/down
+    group.current.position.x = THREE.MathUtils.lerp(-2, 4, offset)
+    group.current.position.y = THREE.MathUtils.lerp(0, -2, offset)
+    group.current.position.z = THREE.MathUtils.lerp(0, 2, offset)
+
+    // 2. SCALING (The model gets bigger as we scroll)
+    // Starts at scale 25 and grows to 35
+    const dynamicScale = THREE.MathUtils.lerp(25, 38, offset)
+    group.current.scale.setScalar(dynamicScale)
+
+    // 3. SMOOTH ROTATION
+    // Complete 2 full rotations (4 * PI) over the whole scroll
+    group.current.rotation.x = THREE.MathUtils.lerp(0.4, Math.PI * 1.2, offset)
+    group.current.rotation.y = THREE.MathUtils.lerp(-0.4, Math.PI * 2, offset)
+    group.current.rotation.z = Math.sin(offset * Math.PI) * 0.5
   })
 
   return (
-    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+    // Increased float intensity for a more premium feel
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
       <Center>
         <primitive 
           ref={group} 
           object={scene} 
-          scale={20} // Adjust this if the keyboard is too big/small
+          // Initial rotation before scroll kicks in
           rotation={[0.4, -0.4, 0]} 
         />
       </Center>
@@ -39,26 +45,28 @@ function AgencyKeyboard() {
   )
 }
 
-// 2. THE MAIN APP
 export default function KeyScroll() {
   return (
     <div className="w-full h-screen bg-[#050505]">
-      <Canvas camera={{ position: [0, 0, 12], fov: 45 }}>
-        {/* Force a black background immediately to prevent white flashes */}
+      <Canvas camera={{ position: [0, 0, 15], fov: 35 }}>
         <color attach="background" args={['#050505']} />
         
-        <ambientLight intensity={0.5} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} color="#00f2ff" />
-        <pointLight position={[-10, -10, -10]} intensity={1} color="#7000ff" />
+        <ambientLight intensity={0.4} />
+        {/* Added more dramatic lighting */}
+        <spotLight position={[20, 20, 10]} angle={0.15} penumbra={1} intensity={3} color="#00f2ff" />
+        <pointLight position={[-15, -10, -10]} intensity={1.5} color="#7000ff" />
         
         <Suspense fallback={<Html center className="text-cyan-500 font-mono">LOADING_SYSTEM...</Html>}>
           <Environment preset="city" />
           
-          <ScrollControls pages={4} damping={0.2}>
+          {/* pages={6} makes the scroll area longer (more scrolling needed).
+              damping={0.3} adds weight to the movement.
+          */}
+          <ScrollControls pages={6} damping={0.3}>
             <AgencyKeyboard />
 
             <Scroll html>
-              <div className="w-screen text-white uppercase overflow-x-hidden">
+              <div className="w-screen text-white uppercase">
                 
                 {/* Hero Section */}
                 <section className="h-screen flex flex-col justify-center px-10 md:px-24">
@@ -70,24 +78,27 @@ export default function KeyScroll() {
                   </p>
                 </section>
 
+                {/* Added extra spacer section to showcase the model movement */}
+                <section className="h-screen" />
+
                 {/* Info Section */}
                 <section className="h-screen flex items-center justify-end px-10 md:px-24">
                   <div className="max-w-xl border-r-8 border-cyan-500 pr-10 text-right">
                     <h2 className="text-6xl font-bold mb-4">Tactile Logic</h2>
                     <p className="normal-case text-zinc-400 text-xl leading-relaxed">
                       We bridge the gap between physical sensation and digital interface. 
-                      Every pixel is a conscious decision.
                     </p>
                   </div>
                 </section>
+
+                <section className="h-screen" />
 
                 {/* Tech Section */}
                 <section className="h-screen flex items-center justify-start px-10 md:px-24">
                   <div className="space-y-2">
                     <p className="text-zinc-500 font-mono">CORE_STACK</p>
-                    <h3 className="text-8xl font-black hover:text-cyan-500 transition-colors cursor-default">WEBGL</h3>
-                    <h3 className="text-8xl font-black hover:text-cyan-500 transition-colors cursor-default">REACT</h3>
-                    <h3 className="text-8xl font-black hover:text-cyan-500 transition-colors cursor-default">TAILWIND</h3>
+                    <h3 className="text-8xl font-black hover:text-cyan-500 transition-colors">WEBGL</h3>
+                    <h3 className="text-8xl font-black hover:text-cyan-500 transition-colors">REACT</h3>
                   </div>
                 </section>
 
@@ -105,7 +116,7 @@ export default function KeyScroll() {
             </Scroll>
           </ScrollControls>
         </Suspense>
-      </Canvas>
+      </Canvas>-o-5>
     </div>
   )
 }

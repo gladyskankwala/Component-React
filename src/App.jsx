@@ -1,8 +1,9 @@
 import KeyScroll from "./components/KeyScroll"
+
 function App() {
   return(
     <>
-     <KeyScroll/>
+     <KeyScroll[\=;/>
     </>
   )
 }
