@@ -1,39 +1,36 @@
 import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { ScrollControls, Scroll, useGLTF, Environment, Float, Center, Html, useScroll, Text } from '@react-three/drei'
-import { EffectComposer, Bloom, Noise, Vignette, Scanline } from '@react-three/postprocessing'
+import { ScrollControls, Scroll, useGLTF, Environment, Float, Center, Html, useScroll } from '@react-three/drei'
+import { EffectComposer, Bloom, Noise, Vignette, ToneMapping } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 function AgencyKeyboard() {
   const group = useRef()
   const scroll = useScroll()
   const { scene } = useGLTF('/assets/keyboard.glb')
-
-  // Clone scene to avoid reference issues if used multiple times
   const clonedScene = useMemo(() => scene.clone(), [scene])
 
   useFrame((state) => {
     const offset = scroll.offset 
+    
+    // Smooth cinematic movement
+    // Moves keyboard from a hero focus to a background element
+    group.current.position.x = THREE.MathUtils.lerp(0, 3, offset)
+    group.current.position.y = THREE.MathUtils.lerp(0, -1, offset)
+    group.current.position.z = THREE.MathUtils.lerp(0, -2, offset)
 
-    // 1. POSITIONING with "Wobble" 
-    // Added a slight sine wave to make the movement feel more fluid/organic
-    group.current.position.x = THREE.MathUtils.lerp(-2, 4, offset)
-    group.current.position.y = THREE.MathUtils.lerp(0, -2, offset) + Math.sin(state.clock.elapsedTime) * 0.1
-    group.current.position.z = THREE.MathUtils.lerp(0, 5, offset)
-
-    // 2. SCALING 
-    const dynamicScale = THREE.MathUtils.lerp(25, 45, offset)
+    // Scaling (subtle zoom for quality feel)
+    const dynamicScale = THREE.MathUtils.lerp(30, 32, offset)
     group.current.scale.setScalar(dynamicScale)
 
-    // 3. ROTATION
-    // Faster rotation during the middle of the scroll (acceleration effect)
-    group.current.rotation.x = THREE.MathUtils.lerp(0.4, Math.PI * 2, offset)
-    group.current.rotation.y = THREE.MathUtils.lerp(-0.4, Math.PI * 3, offset)
-    group.current.rotation.z = Math.sin(offset * Math.PI) * 1.5
+    // Pro-level rotation (less chaotic, more deliberate)
+    group.current.rotation.x = THREE.MathUtils.lerp(0.2, 0.8, offset)
+    group.current.rotation.y = THREE.MathUtils.lerp(-0.4, 0.2, offset)
+    group.current.rotation.z = THREE.MathUtils.lerp(0, 0.1, offset)
   })
 
   return (
-    <Float speed={3} rotationIntensity={1} floatIntensity={2}>
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
       <Center>
         <primitive ref={group} object={clonedScene} />
       </Center>
@@ -41,14 +38,13 @@ function AgencyKeyboard() {
   )
 }
 
-// Separate component for the 3D Background Grid/Particles
-function Particles() {
+function Starfield() {
   const points = useMemo(() => {
-    const p = new Float32Array(500 * 3)
-    for (let i = 0; i < 500; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 20
-      p[i * 3 + 1] = (Math.random() - 0.5) * 20
-      p[i * 3 + 2] = (Math.random() - 0.5) * 20
+    const p = new Float32Array(800 * 3)
+    for (let i = 0; i < 800; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 30
+      p[i * 3 + 1] = (Math.random() - 0.5) * 30
+      p[i * 3 + 2] = (Math.random() - 0.5) * 30
     }
     return p
   }, [])
@@ -58,101 +54,91 @@ function Particles() {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={points.length / 3} array={points} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial size={0.05} color="#00f2ff" transparent opacity={0.4} />
+      <pointsMaterial size={0.02} color="#ffffff" transparent opacity={0.2} sizeAttenuation />
     </points>
   )
 }
 
 export default function KeyScroll() {
   return (
-    <div className="w-full h-screen bg-[#020202]">
-      <Canvas camera={{ position: [0, 0, 15], fov: 35 }} gl={{ antialias: false }}>
-        <color attach="background" args={['#020202']} />
+    <div className="w-full h-screen bg-[#000000]">
+      <Canvas camera={{ position: [0, 0, 10], fov: 25 }} gl={{ antialias: true }}>
+        <color attach="background" args={['#000000']} />
         
-        <ambientLight intensity={0.2} />
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={5} color="#00f2ff" castShadow />
-        <rectAreaLight width={10} height={10} intensity={10} position={[-10, 0, 5]} color="#7000ff" />
+        {/* Apple-Style Rim Lighting */}
+        <spotLight position={[5, 10, 5]} angle={0.3} penumbra={1} intensity={2} color="#ffffff" />
+        <spotLight position={[-5, -10, -5]} angle={0.3} penumbra={1} intensity={1} color="#00f2ff" />
+        <rectAreaLight width={15} height={15} intensity={5} position={[0, 0, 10]} color="#ffffff" />
         
-        <Suspense fallback={<Html center className="text-cyan-500 font-mono animate-pulse">INITIALIZING_ENGINE...</Html>}>
-          <Environment preset="night" />
+        <Suspense fallback={null}>
+          <Environment preset="studio" />
           
-          <ScrollControls pages={6} damping={0.25}>
+          <ScrollControls pages={5} damping={0.1}>
             <AgencyKeyboard />
-            <Particles />
+            <Starfield />
 
-            {/* Post Processing Effects */}
-            <EffectComposer>
-              <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} radius={0.4} />
-              <Scanline opacity={0.1} density={2.5} />
-              <Noise opacity={0.05} />
-              <Vignette eskil={false} offset={0.1} darkness={1.1} />
+            <EffectComposer disableNormalPass>
+              <Bloom luminanceThreshold={1} mipmapBlur intensity={0.5} radius={0.3} />
+              <ToneMapping middleGrey={0.6} maxLuminance={16.0} />
+              <Vignette offset={0.3} darkness={0.8} />
             </EffectComposer>
 
             <Scroll html>
-              <div className="w-screen text-white">
+              <div className="w-screen font-sans">
                 
-                {/* Section 1: Hero */}
-                <section className="h-screen flex flex-col justify-center px-10 md:px-24">
-                  <h1 className="text-[12vw] font-black leading-none tracking-tighter mix-blend-difference">
-                    ULTRA<br/>MANUAL
+                {/* Hero Section */}
+                <section className="h-screen flex flex-col items-center justify-center text-center">
+                  <h1 className="text-[10vw] font-medium tracking-tight text-white leading-none">
+                    ULTRA<span className="font-light text-zinc-500">MANUAL</span>
                   </h1>
-                  <div className="h-1 w-32 bg-cyan-500 mt-4" />
-                  <p className="text-zinc-500 mt-6 font-mono text-sm uppercase tracking-[0.5em]">
-                    Precision Craftsmanship / Vol. 2026
+                  <p className="text-zinc-400 mt-4 text-xl font-light tracking-wide">
+                    Designed for the future of tactile logic.
                   </p>
                 </section>
 
-                {/* Section 2: Large Quote */}
-                <section className="h-screen flex items-center px-10 md:px-24">
-                  <div className="max-w-3xl">
-                    <p className="text-4xl md:text-6xl font-light italic leading-tight text-zinc-300">
-                      "The interface is the <span className="text-white font-bold not-italic">soul</span> of the machine."
-                    </p>
-                  </div>
-                </section>
-
-                {/* Section 3: Feature Grid */}
-                <section className="h-screen grid grid-cols-1 md:grid-cols-2 gap-10 items-center px-10 md:px-24">
-                  <div className="space-y-8">
-                    <div className="group border-l-2 border-zinc-800 pl-6 hover:border-cyan-500 transition-colors">
-                      <h4 className="text-cyan-500 font-mono mb-2">01 / TACTILE</h4>
-                      <h3 className="text-3xl font-bold">Mechanical Precision</h3>
-                      <p className="text-zinc-400 mt-2">Custom tuned switches for the ultimate feedback loop.</p>
+                {/* Bento Grid Features (Based on watermarked_img_7188842171983203063.png) */}
+                <section className="h-screen flex items-center justify-center px-10">
+                  <div className="grid grid-cols-2 gap-4 max-w-5xl w-full">
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl col-span-2 md:col-span-1">
+                      <h3 className="text-cyan-400 font-mono text-xs uppercase mb-4 tracking-tighter">Precision</h3>
+                      <h2 className="text-3xl font-medium text-white">Mechanical Perfection</h2>
+                      <p className="text-zinc-500 mt-2 text-sm">Every keycap is CNC machined for absolute symmetry.</p>
                     </div>
-                    <div className="group border-l-2 border-zinc-800 pl-6 hover:border-purple-500 transition-colors">
-                      <h4 className="text-purple-500 font-mono mb-2">02 / OPTICAL</h4>
-                      <h3 className="text-3xl font-bold">Latency Zero</h3>
-                      <p className="text-zinc-400 mt-2">Light-speed actuation for competitive dominance.</p>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl">
+                      <h3 className="text-white font-mono text-xs uppercase mb-4">Response</h3>
+                      <h2 className="text-3xl font-medium text-white">0.1ms Latency</h2>
+                    </div>
+                    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-3xl col-span-2">
+                       <p className="text-zinc-400 text-lg leading-relaxed italic">
+                        "The interface is the soul of the machine." — Alex Solver
+                       </p>
                     </div>
                   </div>
                 </section>
 
-                {/* Section 4: Full Width Tech */}
-                <section className="h-screen flex flex-col justify-end pb-20 items-center text-center">
-                  <h2 className="text-[15vw] font-black text-transparent stroke-white stroke-2 opacity-10 leading-none" 
-                      style={{ WebkitTextStroke: '1px rgba(255,255,255,0.2)' }}>
-                    HARDWARE
-                  </h2>
+                {/* Tech Specs Section */}
+                <section className="h-screen flex items-center justify-between px-24">
+                  <div className="text-white">
+                    <h2 className="text-[8vw] font-bold opacity-10 tracking-tighter">HARDWARE</h2>
+                    <div className="flex gap-20 mt-10">
+                      <div>
+                        <span className="block text-5xl font-light">100M</span>
+                        <span className="text-zinc-500 font-mono text-xs uppercase">Keystrokes</span>
+                      </div>
+                      <div>
+                        <span className="block text-5xl font-light">8000Hz</span>
+                        <span className="text-zinc-500 font-mono text-xs uppercase">Polling Rate</span>
+                      </div>
+                    </div>
+                  </div>
                 </section>
 
-                {/* Section 5: Stats */}
-                <section className="h-screen flex items-center justify-between px-10 md:px-24">
-                   <div className="flex flex-col items-center">
-                      <span className="text-7xl font-black text-cyan-500">0.1ms</span>
-                      <span className="font-mono text-zinc-500">RESPONSE_TIME</span>
-                   </div>
-                   <div className="flex flex-col items-center">
-                      <span className="text-7xl font-black text-white">100M</span>
-                      <span className="font-mono text-zinc-500">KEY_STROKES</span>
-                   </div>
-                </section>
-
-                {/* Section 6: Contact */}
-                <section className="h-screen flex flex-col items-center justify-center bg-white text-black">
-                  <h2 className="text-8xl font-black mb-8">JOIN_US</h2>
-                  <p className="mb-12 font-mono uppercase tracking-widest text-zinc-500">Limited Edition Access</p>
-                  <button className="px-16 py-8 bg-black text-white text-xl font-bold hover:scale-110 transition-transform">
-                    RESERVE NOW
+                {/* Apple-style White CTA Finish */}
+                <section className="h-[120vh] flex flex-col items-center justify-center bg-white text-black rounded-t-[100px]">
+                  <h2 className="text-7xl font-bold tracking-tight mb-4">JOIN_US</h2>
+                  <p className="text-zinc-500 text-lg mb-10">Available Spring 2026</p>
+                  <button className="px-10 py-4 bg-black text-white rounded-full text-lg font-medium hover:scale-105 transition-transform">
+                    Reserve Now
                   </button>
                 </section>
 
