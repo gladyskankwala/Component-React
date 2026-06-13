@@ -1,10 +1,10 @@
-import KAY from "./components/KAY"
-import KeyScroll from "./components/KeyScroll"
+import Calculater from "./components/calculater"
+
 
 function App() {
   return(
     <>
-     <KAY/>
+    <Calculater/>
     </>
   )
 }
