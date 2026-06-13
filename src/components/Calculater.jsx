@@ -31,7 +31,10 @@ function Calculater() {
                        <button
                        key={num}
                        onClick={() => handleNumberClick(num)}
+                       className={`bg-zinc-700 hover:bg-zinc-600 text-white text-xl font-semibold p-4 rounded-full transition-all duration-150 
+                        ${ num === 0 ? 'col-span-3 rounded-xl' : ''}`}
                        >
+                        {num}
                        </button>
                     ))}
                 </div>
